@@ -6,6 +6,7 @@ import PageHero from './components/PageHero'
 import UploadPanel from './components/UploadPanel'
 import ImageSummary from './components/ImageSummary'
 import VariantGrid from './components/VariantGrid'
+import ImageComparison from './components/ImageComparison'
 
 // The source image is treated as a 3x asset, so all target scales are relative to this baseline.
 const SCALE_REFERENCE = 3
@@ -299,6 +300,9 @@ function App() {
       <UploadPanel busy={busy} statusMessage={statusMessage} onSelectFile={handleSelectFile} />
 
       <ImageSummary meta={imageMeta} />
+      
+      <ImageComparison variants={variants} />
+      
       <VariantGrid
         variants={variants}
         onDownload={handleDownload}
