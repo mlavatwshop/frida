@@ -1,4 +1,4 @@
-import { Container, Paper, Title, Text, FileInput, Loader } from '@mantine/core'
+import { Container, Paper, Title, Text, FileInput, Loader, Group } from '@mantine/core'
 import { IconUpload } from '@tabler/icons-react'
 
 /**
@@ -54,10 +54,12 @@ const UploadPanel = ({ busy, statusMessage, onSelectFile }) => {
         </Text>
 
         {busy ? (
-          <Text size="sm" c="blue">
-            <Loader size="xs" type="dots" mr="xs" style={{ display: 'inline-block' }} />
-            {statusMessage || 'Rendering variants...'}
-          </Text>
+          <Group gap="xs">
+            <Loader size="sm" />
+            <Text size="sm" c="blue">
+              {statusMessage || 'Rendering variants...'}
+            </Text>
+          </Group>
         ) : (
           <Text size="sm" c="dimmed">
             {statusMessage || 'No file selected yet.'}
