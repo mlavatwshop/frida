@@ -12,21 +12,34 @@ const ImageSummary = ({ meta }) => {
   const displayType = meta.type ? meta.type.replace('image/', '').toUpperCase() : 'IMAGE'
 
   return (
-    <section>
-      <h3>Master details</h3>
-      <p>Type: {displayType}</p>
-      <p>File name: {meta.name}</p>
-      <p>
-        Dimensions: {meta.width} x {meta.height}px (about {logicalWidth} x {logicalHeight}px at 1x)
-      </p>
-      <p>Size: {meta.prettySize}</p>
+    <article>
+      <header>
+        <h3>Master details</h3>
+      </header>
+      <dl>
+        <dt>Type</dt>
+        <dd>{displayType}</dd>
+        <dt>File name</dt>
+        <dd>{meta.name}</dd>
+        <dt>Dimensions</dt>
+        <dd>
+          {meta.width} × {meta.height}px <small>(about {logicalWidth} × {logicalHeight}px at 1x)</small>
+        </dd>
+        <dt>Size</dt>
+        <dd>{meta.prettySize}</dd>
+      </dl>
       {meta.previewUrl && (
         <figure>
-          <img src={meta.previewUrl} alt={`Preview of ${meta.name}`} loading="lazy" />
+          <img 
+            src={meta.previewUrl} 
+            alt={`Preview of ${meta.name}`} 
+            loading="lazy"
+            style={{ maxWidth: '100%', height: 'auto' }}
+          />
           <figcaption>Preview</figcaption>
         </figure>
       )}
-    </section>
+    </article>
   )
 }
 

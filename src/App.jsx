@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import pica from 'pica'
-import { FFmpeg } from '@ffmpeg/ffmpeg'
 import PageHero from './components/PageHero'
 import UploadPanel from './components/UploadPanel'
 import ImageSummary from './components/ImageSummary'
@@ -27,11 +26,17 @@ const formatBytes = (bytes) => {
 // Utility that turns a canvas into a Blob while giving us Promise ergonomics.
 const canvasToBlob = (canvas, mimeType, quality) =>
   new Promise((resolve, reject) => {
+    console.log(`[canvasToBlob] Converting canvas (${canvas.width}x${canvas.height}) to ${mimeType}`, quality ? `quality: ${quality}` : '')
+    const startTime = performance.now()
+    
     canvas.toBlob(
       (blob) => {
         if (blob) {
+          const duration = (performance.now() - startTime).toFixed(2)
+          console.log(`[canvasToBlob] ✓ Blob created: ${formatBytes(blob.size)} in ${duration}ms`)
           resolve(blob)
         } else {
+          console.error('[canvasToBlob] ✗ Canvas could not produce a blob')
           reject(new Error('Canvas could not produce a blob'))
         }
       },
@@ -43,9 +48,19 @@ const canvasToBlob = (canvas, mimeType, quality) =>
 // Small helper that loads an Image object so we can read its natural dimensions.
 const loadImage = (src) =>
   new Promise((resolve, reject) => {
+    console.log('[loadImage] Loading image from blob URL...')
+    const startTime = performance.now()
+    
     const image = new Image()
-    image.onload = () => resolve(image)
-    image.onerror = () => reject(new Error('The selected image could not be decoded'))
+    image.onload = () => {
+      const duration = (performance.now() - startTime).toFixed(2)
+      console.log(`[loadImage] ✓ Image loaded: ${image.naturalWidth}x${image.naturalHeight} in ${duration}ms`)
+      resolve(image)
+    }
+    image.onerror = () => {
+      console.error('[loadImage] ✗ Image failed to decode')
+      reject(new Error('The selected image could not be decoded'))
+    }
     image.src = src
   })
 
@@ -56,24 +71,30 @@ function App() {
   const [statusMessage, setStatusMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
 
-  // Refs keep track of resources we must clean up manually to avoid leaking object URLs + wasm instances.
+  // Refs keep track of resources we must clean up manually to avoid leaking object URLs.
   const previewUrlRef = useRef(null)
   const generatedUrlsRef = useRef([])
-  const ffmpegRef = useRef(null)
 
   // Instantiate Pica only once -- it does internal memoization and reusing it gives better performance.
-  const picaInstance = useMemo(() => pica(), [])
+  const picaInstance = useMemo(() => {
+    console.log('[Pica] Initializing Pica instance for high-quality image resizing')
+    return pica()
+  }, [])
 
   const releasePreview = useCallback(() => {
     if (previewUrlRef.current) {
+      console.log('[Cleanup] Revoking preview object URL')
       URL.revokeObjectURL(previewUrlRef.current)
       previewUrlRef.current = null
     }
   }, [])
 
   const releaseVariantUrls = useCallback(() => {
-    generatedUrlsRef.current.forEach((url) => URL.revokeObjectURL(url))
-    generatedUrlsRef.current = []
+    if (generatedUrlsRef.current.length > 0) {
+      console.log(`[Cleanup] Revoking ${generatedUrlsRef.current.length} variant object URLs`)
+      generatedUrlsRef.current.forEach((url) => URL.revokeObjectURL(url))
+      generatedUrlsRef.current = []
+    }
   }, [])
 
   // Clean up when React tears down the component.
@@ -84,51 +105,18 @@ function App() {
     }
   }, [releasePreview, releaseVariantUrls])
 
-  // Lazily load ffmpeg.wasm because it is a chunky dependency.
-  const ensureFfmpeg = useCallback(async () => {
-    if (ffmpegRef.current) {
-      return ffmpegRef.current
-    }
-
-    const ffmpeg = new FFmpeg()
-    await ffmpeg.load()
-    ffmpegRef.current = ffmpeg
-    return ffmpeg
+  // Convert canvas to WebP format for modern web-optimized images.
+  const convertToWebP = useCallback(async (canvas) => {
+    console.log(`[WebP] Converting canvas (${canvas.width}x${canvas.height}) to WebP...`)
+    const startTime = performance.now()
+    
+    const webpBlob = await canvasToBlob(canvas, 'image/webp', 0.9)
+    
+    const duration = (performance.now() - startTime).toFixed(2)
+    console.log(`[WebP] ✓ Conversion complete: ${formatBytes(webpBlob.size)} in ${duration}ms`)
+    
+    return webpBlob
   }, [])
-
-  // Convert a still PNG (lossless) into a looping WEBM so designers can hand-off motion-ready assets.
-  const convertStillToWebM = useCallback(
-    async (blob) => {
-      const ffmpeg = await ensureFfmpeg()
-      const inputName = `source-${Date.now()}.png`
-      const outputName = `output-${Date.now()}.webm`
-
-      await ffmpeg.writeFile(inputName, new Uint8Array(await blob.arrayBuffer()))
-
-      await ffmpeg.exec([
-        '-loop',
-        '1',
-        '-i',
-        inputName,
-        '-t',
-        '1',
-        '-c:v',
-        'libvpx-vp9',
-        '-pix_fmt',
-        'yuva420p',
-        '-b:v',
-        '1M',
-        outputName,
-      ])
-
-      const data = await ffmpeg.readFile(outputName)
-      await ffmpeg.deleteFile(inputName)
-      await ffmpeg.deleteFile(outputName)
-
-      return new Blob([data.buffer], { type: 'video/webm' })
-    },
-    [ensureFfmpeg],
-  )
 
   const createFileEntry = useCallback((format, mime, blob, scaleLabel, originalName) => {
     const baseName = originalName.replace(/\.[^/.]+$/, '') || 'frida-asset'
@@ -150,6 +138,14 @@ function App() {
   const handleSelectFile = useCallback(
     async (file) => {
       if (!file) return
+
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      console.log('[Frida] 🎬 Starting image processing pipeline')
+      console.log(`[File] Name: ${file.name}`)
+      console.log(`[File] Type: ${file.type}`)
+      console.log(`[File] Size: ${formatBytes(file.size)}`)
+      
+      const pipelineStart = performance.now()
 
       setBusy(true)
       setErrorMessage('')
@@ -177,6 +173,8 @@ function App() {
         if (!ctx) {
           throw new Error('Your browser does not support the Canvas 2D API.')
         }
+        
+        console.log(`[Canvas] Drawing source image to base canvas (${baseCanvas.width}x${baseCanvas.height})`)
         ctx.drawImage(imageElement, 0, 0)
 
         const masterMeta = {
@@ -190,27 +188,40 @@ function App() {
         }
         setImageMeta(masterMeta)
 
+        console.log(`[Processing] Generating ${TARGET_SCALES.length} scale variants (${TARGET_SCALES.map(s => s.label).join(', ')})`)
         const nextVariants = []
 
         for (const scale of TARGET_SCALES) {
+          console.log(`\n[Scale ${scale.label}] Starting generation...`)
           setStatusMessage(`Generating ${scale.label} assets...`)
 
           const width = Math.max(1, Math.round(masterMeta.width * (scale.factor / SCALE_REFERENCE)))
           const height = Math.max(1, Math.round(masterMeta.height * (scale.factor / SCALE_REFERENCE)))
+
+          console.log(`[Scale ${scale.label}] Target dimensions: ${width}x${height}`)
 
           const targetCanvas = document.createElement('canvas')
           targetCanvas.width = width
           targetCanvas.height = height
 
           // Pica handles color management + interpolation, so resized assets remain crisp.
+          console.log(`[Scale ${scale.label}] Resizing with Pica (quality: 3, alpha: true)...`)
+          const resizeStart = performance.now()
           await picaInstance.resize(baseCanvas, targetCanvas, {
             quality: 3,
             alpha: true,
           })
+          const resizeDuration = (performance.now() - resizeStart).toFixed(2)
+          console.log(`[Scale ${scale.label}] ✓ Resize complete in ${resizeDuration}ms`)
 
+          console.log(`[Scale ${scale.label}] Generating PNG...`)
           const pngBlob = await canvasToBlob(targetCanvas, 'image/png')
+          
+          console.log(`[Scale ${scale.label}] Generating JPEG (quality: 0.92)...`)
           const jpegBlob = await canvasToBlob(targetCanvas, 'image/jpeg', 0.92)
-          const webmBlob = await convertStillToWebM(pngBlob)
+          
+          console.log(`[Scale ${scale.label}] Generating WebP...`)
+          const webpBlob = await convertToWebP(targetCanvas)
 
           nextVariants.push({
             label: scale.label,
@@ -219,15 +230,28 @@ function App() {
             files: [
               createFileEntry('PNG', 'image/png', pngBlob, scale.label, masterMeta.name),
               createFileEntry('JPEG', 'image/jpeg', jpegBlob, scale.label, masterMeta.name),
-              createFileEntry('WEBM', 'video/webm', webmBlob, scale.label, masterMeta.name),
+              createFileEntry('WebP', 'image/webp', webpBlob, scale.label, masterMeta.name),
             ],
           })
+          
+          console.log(`[Scale ${scale.label}] ✓ All formats generated (PNG: ${formatBytes(pngBlob.size)}, JPEG: ${formatBytes(jpegBlob.size)}, WebP: ${formatBytes(webpBlob.size)})`)
         }
 
         setVariants(nextVariants)
+        
+        const totalDuration = ((performance.now() - pipelineStart) / 1000).toFixed(2)
+        const totalFiles = nextVariants.length * 3
+        console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+        console.log(`[Frida] ✅ Processing complete! ${totalFiles} files generated in ${totalDuration}s`)
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
+        
         setStatusMessage('All variants are ready to download!')
       } catch (error) {
-        console.error(error)
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+        console.error('[Frida] ❌ Processing failed')
+        console.error('[Error]', error)
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
+        
         setErrorMessage(error.message || 'Something went wrong while processing the image.')
         setImageMeta(null)
         setStatusMessage('Processing failed -- please try another file.')
@@ -236,7 +260,7 @@ function App() {
       }
     },
     [
-      convertStillToWebM,
+      convertToWebP,
       createFileEntry,
       picaInstance,
       releasePreview,
@@ -246,30 +270,30 @@ function App() {
 
   const handleDownload = useCallback((file) => {
     // Placeholder for analytics hooks; keeping it here makes future enhancements trivial.
-    console.info(`Downloading ${file.suggestedName}`)
+    console.log(`[Download] 📥 User downloading: ${file.suggestedName} (${file.prettySize})`)
   }, [])
 
   return (
-    <main>
+    <main className="container">
       <PageHero />
 
       {errorMessage && (
-        <section>
-          <strong>Processing failed</strong>
+        <article style={{ backgroundColor: 'var(--pico-del-color)' }}>
+          <header>
+            <strong>Processing failed</strong>
+          </header>
           <p>{errorMessage}</p>
-        </section>
+        </article>
       )}
 
       <UploadPanel busy={busy} statusMessage={statusMessage} onSelectFile={handleSelectFile} />
 
-      <section>
-        <ImageSummary meta={imageMeta} />
-        <VariantGrid
-          variants={variants}
-          onDownload={handleDownload}
-          emptyState="Upload a 3x master to see freshly minted variants."
-        />
-      </section>
+      <ImageSummary meta={imageMeta} />
+      <VariantGrid
+        variants={variants}
+        onDownload={handleDownload}
+        emptyState="Upload a 3x master to see freshly minted variants."
+      />
     </main>
   )
 }

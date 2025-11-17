@@ -22,22 +22,30 @@ const UploadPanel = ({ busy, statusMessage, onSelectFile }) => {
   }
 
   return (
-    <section onDrop={handleDrop} onDragOver={handleDragOver}>
-      <h2>Drop in your 3x source</h2>
+    <article onDrop={handleDrop} onDragOver={handleDragOver}>
+      <header>
+        <h2>Drop in your 3x source</h2>
+      </header>
       <p>
         Frida assumes your upload is a 3x density file. We will automatically derive lower-density siblings, keep
         metadata where possible, and display exact pixel math so you can double-check before downloading.
       </p>
 
       <label>
-        Select an image file:
+        Select an image file
         <input type="file" accept="image/*" onChange={handleFileChange} disabled={busy} />
       </label>
 
-      <p>Or drag the file onto this panel.</p>
+      <small>Or drag the file onto this panel.</small>
 
-      <p>{busy ? statusMessage || 'Rendering variants...' : statusMessage || 'No file selected yet.'}</p>
-    </section>
+      <footer>
+        {busy ? (
+          <p aria-busy="true">{statusMessage || 'Rendering variants...'}</p>
+        ) : (
+          <p>{statusMessage || 'No file selected yet.'}</p>
+        )}
+      </footer>
+    </article>
   )
 }
 

@@ -2,15 +2,16 @@
 // Keeping layout + copy isolated makes it easy to iterate on the welcome experience later.
 const PageHero = () => {
   return (
-    <section>
-      <p>Live preview</p>
-      <h1>Frida</h1>
-      <p>
-        Upload a single 3x master image and let Frida mint precise 2x, 1.5x, and 1x siblings. Every rendition
-        ships as PNG, JPEG, and WEBM so you can cover UI, marketing, and motion-ready pipelines without
-        leaving the browser.
-      </p>
-    </section>
+    <header>
+      <hgroup>
+        <h1>Frida</h1>
+        <p>
+          Upload a single 3x master image and let Frida mint precise 2x, 1.5x, and 1x siblings. Every rendition
+          ships as PNG, JPEG, and WebP so you can cover legacy browsers, quality-focused needs, and modern
+          web-optimized pipelines without leaving the browser.
+        </p>
+      </hgroup>
+    </header>
   )
 }
 
