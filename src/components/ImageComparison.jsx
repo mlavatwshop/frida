@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Container, Paper, Title, Text, Table, Stack, Box } from '@mantine/core'
+import { Container, Paper, Title, Text, Table, Stack, Box, Group, Badge } from '@mantine/core'
 import {
   ImgComparisonSlider,
 } from '@img-comparison-slider/react'
@@ -7,36 +7,8 @@ import {
 /**
  * Displays a comparison table and interactive slider to compare image variants
  */
-const ImageComparison = ({ variants, sourceImage }) => {
+const ImageComparison = ({ variants }) => {
   const [selectedImage, setSelectedImage] = useState(null)
-
-  const sourceVariant = useMemo(() => {
-    if (!sourceImage?.previewUrl) return null
-
-    const format = (() => {
-      if (!sourceImage.type) return 'Original'
-      if (sourceImage.type.includes('png')) return 'PNG'
-      if (sourceImage.type.includes('jpeg') || sourceImage.type.includes('jpg')) return 'JPEG'
-      if (sourceImage.type.includes('webp')) return 'WebP'
-      return 'Original'
-    })()
-
-    return {
-      label: '3x',
-      width: sourceImage.width,
-      height: sourceImage.height,
-      files: [
-        {
-          format,
-          mime: sourceImage.type,
-          size: sourceImage.size,
-          prettySize: sourceImage.prettySize,
-          url: sourceImage.previewUrl,
-          suggestedName: sourceImage.name,
-        },
-      ],
-    }
-  }, [sourceImage])
 
   // Find the 1x variant to use as the base
   const baseImage = useMemo(() => {
@@ -49,13 +21,6 @@ const ImageComparison = ({ variants, sourceImage }) => {
     }
     return { width: 0, height: 0 }
   }, [baseImage])
-
-  const comparisonVariants = useMemo(() => {
-    if (sourceVariant) {
-      return [sourceVariant, ...variants]
-    }
-    return variants
-  }, [sourceVariant, variants])
 
   // Get default selected image (2x PNG) or use the current selection
   const activeSelection = useMemo(() => {
@@ -78,9 +43,9 @@ const ImageComparison = ({ variants, sourceImage }) => {
     return null
   }
 
-  // Organize data for the table: rows = formats, columns = scales (including optional 3x source)
+  // Organize data for the table: rows = formats, columns = scales
   const formats = ['PNG', 'JPEG', 'WebP']
-  const scales = comparisonVariants.map(v => v.label)
+  const scales = variants.map(v => v.label)
 
   const handleCellClick = (variant, file) => {
     setSelectedImage({ variant, file })
@@ -92,17 +57,6 @@ const ImageComparison = ({ variants, sourceImage }) => {
   const sliderActiveLabel = activeSelection
     ? `${activeSelection.variant.label} ${activeSelection.file.format}`
     : ''
-  const sliderLabelStyles = {
-    position: 'absolute',
-    bottom: 12,
-    padding: '4px 8px',
-    borderRadius: 6,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    color: 'white',
-    fontSize: '0.75rem',
-    pointerEvents: 'none',
-    lineHeight: 1.2,
-  }
 
   return (
     <Container size="lg" py="md">
@@ -131,41 +85,41 @@ const ImageComparison = ({ variants, sourceImage }) => {
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              {formats.map(format => (
-                <Table.Tr key={format}>
-                  <Table.Td>
-                    <Text fw={600}>{format}</Text>
-                  </Table.Td>
-                  {comparisonVariants.map(variant => {
-                    const file = variant.files.find(f => f.format === format)
-                    const isSelected = activeSelection?.file?.url === file?.url
-                    const isBase = variant.label === '1x' && format === 'PNG'
-                    
-                    return (
-                      <Table.Td 
-                        key={`${variant.label}-${format}`}
-                        onClick={() => file && handleCellClick(variant, file)}
-                        style={{ 
-                          textAlign: 'center',
-                          cursor: 'pointer',
-                          backgroundColor: isSelected ? 'var(--mantine-color-blue-light)' : 
-                                         isBase ? 'var(--mantine-color-gray-light)' : undefined,
-                          fontWeight: isBase ? 600 : undefined,
-                        }}
-                      >
-                        {file ? (
-                          <>
-                            <Text size="sm">{file.prettySize}</Text>
-                            {isBase && (
-                              <Text size="xs" c="dimmed">(baseline)</Text>
-                            )}
-                          </>
-                        ) : '-'}
-                      </Table.Td>
-                    )
-                  })}
-                </Table.Tr>
-              ))}
+                {formats.map(format => (
+                  <Table.Tr key={format}>
+                    <Table.Td>
+                      <Text fw={600}>{format}</Text>
+                    </Table.Td>
+                    {variants.map(variant => {
+                      const file = variant.files.find(f => f.format === format)
+                      const isSelected = activeSelection?.file?.url === file?.url
+                      const isBase = variant.label === '1x' && format === 'PNG'
+                      
+                      return (
+                        <Table.Td 
+                          key={`${variant.label}-${format}`}
+                          onClick={() => file && handleCellClick(variant, file)}
+                          style={{ 
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            backgroundColor: isSelected ? 'var(--mantine-color-blue-light)' : 
+                                           isBase ? 'var(--mantine-color-gray-light)' : undefined,
+                            fontWeight: isBase ? 600 : undefined,
+                          }}
+                        >
+                          {file ? (
+                            <>
+                              <Text size="sm">{file.prettySize}</Text>
+                              {isBase && (
+                                <Text size="xs" c="dimmed">(baseline)</Text>
+                              )}
+                            </>
+                          ) : '-'}
+                        </Table.Td>
+                      )
+                    })}
+                  </Table.Tr>
+                ))}
             </Table.Tbody>
           </Table>
 
@@ -181,7 +135,6 @@ const ImageComparison = ({ variants, sourceImage }) => {
                   height: dimensions.height,
                   maxWidth: '100%',
                   margin: '0 auto',
-                  position: 'relative',
                 }}
               >
                 <ImgComparisonSlider>
@@ -206,21 +159,15 @@ const ImageComparison = ({ variants, sourceImage }) => {
                     }}
                   />
                 </ImgComparisonSlider>
-                {sliderBaseLabel && (
-                  <Box style={{ ...sliderLabelStyles, left: 12 }}>
-                    <Text size="xs" fw={600}>
-                      {sliderBaseLabel}
-                    </Text>
-                  </Box>
-                )}
-                {sliderActiveLabel && (
-                  <Box style={{ ...sliderLabelStyles, right: 12, textAlign: 'right' }}>
-                    <Text size="xs" fw={600}>
-                      {sliderActiveLabel}
-                    </Text>
-                  </Box>
-                )}
               </Box>
+              <Group justify="space-between" mt="xs" wrap="nowrap">
+                <Badge variant="light" radius="sm">
+                  {sliderBaseLabel || '1x PNG'}
+                </Badge>
+                <Badge variant="light" radius="sm">
+                  {sliderActiveLabel || 'Select a variant'}
+                </Badge>
+              </Group>
             </Box>
           )}
         </Stack>
