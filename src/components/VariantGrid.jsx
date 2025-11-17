@@ -4,60 +4,41 @@
 const VariantGrid = ({ variants, onDownload, emptyState }) => {
   if (!variants.length) {
     return (
-      <wa-card className="panel-card">
-        <div className="variant-empty">
-          <wa-icon name="sparkles" size="lg" />
-          <p>{emptyState}</p>
-        </div>
-      </wa-card>
+      <section>
+        <p>{emptyState}</p>
+      </section>
     )
   }
 
   return (
-    <div className="variant-grid">
+    <section>
       {variants.map((variant) => (
-        <wa-card key={variant.label} className="panel-card variant-card">
-          <div className="variant-card__header">
-            <div>
-              <p className="summary-label">Scale</p>
-              <h3>{variant.label}</h3>
-            </div>
-            <div className="variant-card__dims">
-              <p className="summary-label">Pixels</p>
-              <p className="summary-value">
-                {variant.width} x {variant.height}
-              </p>
-            </div>
-          </div>
-
-          <div className="variant-card__formats">
+        <article key={variant.label}>
+          <h3>{variant.label}</h3>
+          <p>
+            Pixels: {variant.width} x {variant.height}
+          </p>
+          <ul>
             {variant.files.map((file) => (
-              <div key={`${variant.label}-${file.format}`} className="variant-card__row">
-                <div>
-                  <strong>{file.format}</strong>
-                  <p>{file.mime}</p>
-                  <small>{file.prettySize}</small>
-                </div>
-                {/* wa-button doubles as an anchor so we can feed it download metadata */}
-                <wa-button
-                  variant="neutral"
-                  appearance="outlined"
-                  size="small"
+              <li key={`${variant.label}-${file.format}`}>
+                <p>
+                  {file.format} ({file.mime}) -- {file.prettySize}
+                </p>
+                <a
                   href={file.url}
                   download={file.suggestedName}
                   target="_blank"
                   rel="noreferrer"
                   onClick={() => onDownload(file)}
                 >
-                  <wa-icon slot="start" name="download" />
-                  Download
-                </wa-button>
-              </div>
+                  Download {file.format}
+                </a>
+              </li>
             ))}
-          </div>
-        </wa-card>
+          </ul>
+        </article>
       ))}
-    </div>
+    </section>
   )
 }
 

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import pica from 'pica'
 import { FFmpeg } from '@ffmpeg/ffmpeg'
-import './App.css'
 import PageHero from './components/PageHero'
 import UploadPanel from './components/UploadPanel'
 import ImageSummary from './components/ImageSummary'
@@ -251,24 +250,19 @@ function App() {
   }, [])
 
   return (
-    <div className="app-shell">
+    <main>
       <PageHero />
 
       {errorMessage && (
-        <wa-card className="panel-card error-card">
-          <div className="error-card__body">
-            <wa-icon name="triangle-exclamation" />
-            <div>
-              <strong>Processing failed</strong>
-              <p>{errorMessage}</p>
-            </div>
-          </div>
-        </wa-card>
+        <section>
+          <strong>Processing failed</strong>
+          <p>{errorMessage}</p>
+        </section>
       )}
 
       <UploadPanel busy={busy} statusMessage={statusMessage} onSelectFile={handleSelectFile} />
 
-      <section className="results-grid">
+      <section>
         <ImageSummary meta={imageMeta} />
         <VariantGrid
           variants={variants}
@@ -276,7 +270,7 @@ function App() {
           emptyState="Upload a 3x master to see freshly minted variants."
         />
       </section>
-    </div>
+    </main>
   )
 }
 

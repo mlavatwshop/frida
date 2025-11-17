@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@awesome.me/webawesome": "^3.0.0",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "pica": "^9.0.1",
     "react": "^19.2.0",

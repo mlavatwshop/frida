@@ -12,39 +12,21 @@ const ImageSummary = ({ meta }) => {
   const displayType = meta.type ? meta.type.replace('image/', '').toUpperCase() : 'IMAGE'
 
   return (
-    <wa-card className="panel-card image-summary">
-      <div className="summary-header">
-        <h3>Master details</h3>
-        <wa-badge variant="neutral" pill>
-          {displayType}
-        </wa-badge>
-      </div>
-
-      <div className="summary-grid">
-        <div>
-          <p className="summary-label">File</p>
-          <p className="summary-value">{meta.name}</p>
-        </div>
-        <div>
-          <p className="summary-label">Dimensions</p>
-          <p className="summary-value">
-            {meta.width} x {meta.height}px
-          </p>
-          <small>~{logicalWidth} x {logicalHeight}px @1x</small>
-        </div>
-        <div>
-          <p className="summary-label">Size</p>
-          <p className="summary-value">{meta.prettySize}</p>
-        </div>
-      </div>
-
+    <section>
+      <h3>Master details</h3>
+      <p>Type: {displayType}</p>
+      <p>File name: {meta.name}</p>
+      <p>
+        Dimensions: {meta.width} x {meta.height}px (about {logicalWidth} x {logicalHeight}px at 1x)
+      </p>
+      <p>Size: {meta.prettySize}</p>
       {meta.previewUrl && (
-        <div className="preview-frame">
-          {/* Browsers isolate file URLs already, so it is safe to show the preview directly */}
+        <figure>
           <img src={meta.previewUrl} alt={`Preview of ${meta.name}`} loading="lazy" />
-        </div>
+          <figcaption>Preview</figcaption>
+        </figure>
       )}
-    </wa-card>
+    </section>
   )
 }
 
