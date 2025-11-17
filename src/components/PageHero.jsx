@@ -6,7 +6,7 @@ const PageHero = () => {
   return (
     <Container size="lg" py="xl">
       <Group gap="sm" align="center">
-        <img src="/vite.svg" alt="Frida logo" style={{ width: '40px', height: '40px' }} />
+        <img src="vite.svg" alt="Frida logo" style={{ width: '40px', height: '40px' }} />
         <Title order={1}>Frida</Title>
       </Group>
       <Text size="lg" c="dimmed" mt="sm">
