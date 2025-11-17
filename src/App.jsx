@@ -11,6 +11,7 @@ import ImageComparison from './components/ImageComparison'
 // The source image is treated as a 3x asset, so all target scales are relative to this baseline.
 const SCALE_REFERENCE = 3
 const TARGET_SCALES = [
+  { label: '3x', factor: 3 },
   { label: '2x', factor: 2 },
   { label: '1.5x', factor: 1.5 },
   { label: '1x', factor: 1 },
@@ -300,9 +301,9 @@ function App() {
       <UploadPanel busy={busy} statusMessage={statusMessage} onSelectFile={handleSelectFile} />
 
       <ImageSummary meta={imageMeta} />
-      
+
       <ImageComparison variants={variants} />
-      
+
       <VariantGrid
         variants={variants}
         onDownload={handleDownload}
