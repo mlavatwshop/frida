@@ -300,9 +300,9 @@ function App() {
       <UploadPanel busy={busy} statusMessage={statusMessage} onSelectFile={handleSelectFile} />
 
       <ImageSummary meta={imageMeta} />
-      
-      <ImageComparison variants={variants} />
-      
+
+      <ImageComparison variants={variants} sourceImage={imageMeta} />
+
       <VariantGrid
         variants={variants}
         onDownload={handleDownload}
