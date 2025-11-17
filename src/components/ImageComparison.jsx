@@ -64,10 +64,6 @@ const ImageComparison = ({ variants }) => {
     return result
   }, [variants])
 
-  if (!variants.length || !baseImage) {
-    return null
-  }
-
   // Organize data for the table: rows = formats, columns = scales
   const formats = ['PNG', 'JPEG', 'WebP']
   const scales = variants.map(v => v.label)
@@ -101,6 +97,10 @@ const ImageComparison = ({ variants }) => {
       }
     }
   }, [isVertical, activeSelection])
+
+  if (!variants.length || !baseImage) {
+    return null
+  }
 
   return (
     <Container size="lg" py="md">
