@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Container, Alert } from '@mantine/core'
+import { IconAlertCircle } from '@tabler/icons-react'
 import pica from 'pica'
 import PageHero from './components/PageHero'
 import UploadPanel from './components/UploadPanel'
@@ -273,17 +275,25 @@ function App() {
     console.log(`[Download] 📥 User downloading: ${file.suggestedName} (${file.prettySize})`)
   }, [])
 
+  const handleDownloadAll = useCallback((files) => {
+    console.log(`[Download All] 📦 User initiated batch download of ${files.length} files`)
+  }, [])
+
   return (
-    <main className="container">
+    <>
       <PageHero />
 
       {errorMessage && (
-        <article style={{ backgroundColor: 'var(--pico-del-color)' }}>
-          <header>
-            <strong>Processing failed</strong>
-          </header>
-          <p>{errorMessage}</p>
-        </article>
+        <Container size="lg" py="md">
+          <Alert 
+            icon={<IconAlertCircle size={16} />} 
+            title="Processing failed" 
+            color="red"
+            variant="filled"
+          >
+            {errorMessage}
+          </Alert>
+        </Container>
       )}
 
       <UploadPanel busy={busy} statusMessage={statusMessage} onSelectFile={handleSelectFile} />
@@ -292,9 +302,10 @@ function App() {
       <VariantGrid
         variants={variants}
         onDownload={handleDownload}
+        onDownloadAll={handleDownloadAll}
         emptyState="Upload a 3x master to see freshly minted variants."
       />
-    </main>
+    </>
   )
 }
 

@@ -1,9 +1,11 @@
+import { Container, Paper, Title, Text, FileInput, Loader } from '@mantine/core'
+import { IconUpload } from '@tabler/icons-react'
+
 /**
  * Lightweight upload surface built around native HTML controls so the UI still works without any styling.
  */
 const UploadPanel = ({ busy, statusMessage, onSelectFile }) => {
-  const handleFileChange = (event) => {
-    const file = event.target.files?.[0]
+  const handleFileChange = (file) => {
     if (file && !busy) {
       onSelectFile(file)
     }
@@ -22,30 +24,47 @@ const UploadPanel = ({ busy, statusMessage, onSelectFile }) => {
   }
 
   return (
-    <article onDrop={handleDrop} onDragOver={handleDragOver}>
-      <header>
-        <h2>Drop in your 3x source</h2>
-      </header>
-      <p>
-        Frida assumes your upload is a 3x density file. We will automatically derive lower-density siblings, keep
-        metadata where possible, and display exact pixel math so you can double-check before downloading.
-      </p>
+    <Container size="lg" py="md">
+      <Paper 
+        shadow="sm" 
+        p="xl" 
+        radius="md" 
+        withBorder
+        onDrop={handleDrop} 
+        onDragOver={handleDragOver}
+      >
+        <Title order={2} mb="md">Drop in your 3x source</Title>
+        <Text mb="lg">
+          Frida assumes your upload is a 3x density file. We will automatically derive lower-density siblings, keep
+          metadata where possible, and display exact pixel math so you can double-check before downloading.
+        </Text>
 
-      <label>
-        Select an image file
-        <input type="file" accept="image/*" onChange={handleFileChange} disabled={busy} />
-      </label>
+        <FileInput
+          label="Select an image file"
+          placeholder="Choose file"
+          accept="image/*"
+          onChange={handleFileChange}
+          disabled={busy}
+          leftSection={<IconUpload size={16} />}
+          mb="sm"
+        />
 
-      <small>Or drag the file onto this panel.</small>
+        <Text size="sm" c="dimmed" mb="lg">
+          Or drag the file onto this panel.
+        </Text>
 
-      <footer>
         {busy ? (
-          <p aria-busy="true">{statusMessage || 'Rendering variants...'}</p>
+          <Text size="sm" c="blue">
+            <Loader size="xs" type="dots" mr="xs" style={{ display: 'inline-block' }} />
+            {statusMessage || 'Rendering variants...'}
+          </Text>
         ) : (
-          <p>{statusMessage || 'No file selected yet.'}</p>
+          <Text size="sm" c="dimmed">
+            {statusMessage || 'No file selected yet.'}
+          </Text>
         )}
-      </footer>
-    </article>
+      </Paper>
+    </Container>
   )
 }
 
